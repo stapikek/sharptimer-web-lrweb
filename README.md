@@ -1,104 +1,117 @@
+# Surf Records Module
+
+---
+
 ## Основные возможности
 
+- **Фильтрация по стилю Normal** - показывает только рекорды со стилем Normal (Style = 0, Mode = '')
 - **Статистика** - общее количество рекордов, игроков и карт
 - **Фильтрация карт** - разделение по категориям (surf, kz, bhop, other)
 - **Таблица лидеров** - топ игроков по времени прохождения
 - **Профили игроков** - ссылки на профили и Steam
 - **Поиск** - быстрый поиск карт
-- **Интеграция с темой** - использует цвета и шрифты сайта
+- **AJAX обновления** - смена карт без перезагрузки страницы
+
+---
 
 ## Требования
+
 - **PHP 7.4+**
 - **MySQL 5.7+**
 - [NEO 3.0](https://stellarteam.store/resource/template-neo-v3)
 
+---
+
 ## База данных
 
 ### Подключение
-Настройки хранятся в `settings.php`:
-```php
-'database' => [
-    'host' => 'localhost',
-    'username' => 'your_username',
-    'password' => 'your_password',
-    'database' => 'your_database',
-    'charset' => 'utf8mb4'
-]
-```
+Настройки базы данных загружаются из `storage/cache/sessions/db.php`:
+Добавлять через Админ Панель (Без префикса таблицы)
 
-### Требования к базе данных
-Модуль работает с таблицей `PlayerRecords` со следующей структурой:
+**Примечание:** Если в конфигурации `db.php` указан префикс таблиц в поле `Prefix[0]['table']`, то модуль будет использовать таблицу с этим префиксом (например, `prefix_PlayerRecords`).
 
-```sql
-CREATE TABLE `PlayerRecords` (
-  `SteamID` varchar(17) NOT NULL,
-  `PlayerName` varchar(32) NOT NULL,
-  `MapName` varchar(32) NOT NULL,
-  `TimerTicks` int(11) NOT NULL,
-  `FormattedTime` varchar(12) DEFAULT NULL,
-  `UnixStamp` int(11) NOT NULL,
-  PRIMARY KEY (`SteamID`, `MapName`),
-  KEY `MapName` (`MapName`),
-  KEY `TimerTicks` (`TimerTicks`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
-
-### Поля таблицы
-- `SteamID` - Steam ID игрока (varchar(17))
-- `PlayerName` - имя игрока (varchar(32))
-- `MapName` - название карты (varchar(32))
-- `TimerTicks` - время в тиках (int(11))
-- `FormattedTime` - отформатированное время (varchar(12))
-- `UnixStamp` - дата рекорда (int(11))
+---
 
 ## Установка
 
-1. Скопируйте модуль в `/app/modules/`
-2. **Настройте базу данных** в `settings.php`:
-   ```php
-   'database' => [
-       'host' => 'your_database_host',
-       'username' => 'your_database_username', 
-       'password' => 'your_database_password',
-       'database' => 'your_database_name',
-       'charset' => 'utf8mb4'
-   ]
-   ```
-3. Откройте страницу: `https://your-domain.com/surf/`
+1. **Скопируйте модуль** в `/app/modules/`
+2. **Убедитесь, что в `storage/cache/sessions/db.php`** есть конфигурация для сервера 'surf'
+3. **Откройте страницу**: `https://your-domain.com/surf/`
 
-## Функциональность
+---
 
-### Статистика
-Отображает общую информацию:
-- Всего рекордов
-- Всего игроков
-- Всего карт
+## Настройки
 
-### Фильтрация карт
-Категории:
-- **SURF** - surf_* карты
-- **KZ** - kz_* карты  
-- **BHOP** - bhop_* карты
-- **Other** - остальные карты
+### Отображение и кеширование
+Настройки отображения и кеширования находятся в `settings.php`:
 
-### Настройка отображения
-В `settings.php`:
 ```php
-'display' => [
-    'default_map' => 'surf_whiteout',     // Карта по умолчанию
-    'records_per_page' => 100,            // Лимит записей
-    'map_division' => true,               // Разделение по категориям
-    'default_tab' => 'surf'               // Вкладка по умолчанию
-]
+return [
+    // Настройки отображения
+    'display' => [
+        'default_map' => 'surf_whiteout',     // Карта по умолчанию
+        'records_per_page' => 50,              // Лимит записей (оптимизировано)
+        'map_division' => true,                // Разделение по категориям
+        'default_tab' => 'surf'                // Вкладка по умолчанию
+    ],
+    
+    // Настройки кеширования
+    'cache' => [
+        'enabled' => true,
+        'time' => 1800,              // Общий кеш: 30 минут
+        'maps_cache_time' => 3600,   // Карты: 1 час
+        'stats_cache_time' => 900,   // Статистика: 15 минут
+        'records_cache_time' => 600   // Рекорды: 10 минут
+    ]
+];
 ```
 
-### Фильтрация по стилю
+---
+
+## Фильтрация по стилю Normal
+
 Модуль показывает только рекорды со стилем **Normal**:
 - `Style = 0` и `Mode = ''` (пустой)
 - Исключает рекорды с другими стилями (например, Style = 10)
 - Исключает рекорды с режимом "Standard"
 
+## Рекомендации по настройке
+
+### Для высоконагруженных сайтов
+```php
+'cache' => [
+    'maps_cache_time' => 7200,   // 2 часа
+    'stats_cache_time' => 1800,  // 30 минут
+    'records_cache_time' => 1200 // 20 минут
+]
+```
+
+### Для сайтов с частыми обновлениями
+```php
+'cache' => [
+    'maps_cache_time' => 1800,   // 30 минут
+    'stats_cache_time' => 600,   // 10 минут
+    'records_cache_time' => 300   // 5 минут
+]
+```
+
 ## Решение проблем
 
 ### Переводы не появляются
 Очистите кеш в Админ панели
+
+### Рекорды не загружаются
+1. Проверьте настройки базы данных в `storage/cache/sessions/db.php`
+2. Убедитесь, что таблица `PlayerRecords` (или с префиксом) существует
+3. Проверьте логи ошибок PHP
+4. Убедитесь, что конфигурация 'surf' существует в db.php
+
+### Медленная загрузка
+1. Увеличьте время кеширования в настройках
+2. Проверьте индексы базы данных
+
+## Поддержка
+При возникновении проблем:
+1. Проверьте логи ошибок PHP
+2. Убедитесь в правильности настроек базы данных
+3. Проверьте права доступа к файлам кеша (777)
