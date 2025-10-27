@@ -22,7 +22,7 @@ if (isset($_GET['map'])) {
     if (preg_match('/^[a-zA-Z0-9_-]+$/', $map_param) && strlen($map_param) <= 64) {
         $current_map = $map_param;
     } else {
-        error_log('SurfRecordsModule: Invalid map name in URL - ' . $map_param);
+        error_log('SurfRecordsModule: Invalid map name in URL - ' . htmlspecialchars($map_param, ENT_QUOTES, 'UTF-8'));
     }
 }
 
@@ -234,7 +234,7 @@ $config = $SurfRecords->getConfig();
                                 </span>
                             </div>
                             <div class="table-col col-player" data-label="<?= $t('player') ?>: ">
-                                <a href="/profiles/<?= $record['SteamID'] ?>/" 
+                                <a href="/profiles/<?= $record['SteamID'] ?>/?search=1" 
                                    class="player-name-link"
                                    title="<?= $t('view_profile') ?>">
                                     <?= htmlspecialchars($record['PlayerName']) ?>

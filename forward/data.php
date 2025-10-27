@@ -4,6 +4,11 @@ if (!defined('IN_LR')) {
     die('Access denied');
 }
 
+if (!defined('STORAGE')) {
+    $rootPath = dirname(dirname(dirname(dirname(dirname(__DIR__)))));
+    define('STORAGE', $rootPath . '/storage/');
+}
+
 class SurfRecordsModule {
     
     private $settings;
@@ -11,6 +16,8 @@ class SurfRecordsModule {
     private $cache_dir;
     private $General;
     private $Translate;
+    private $tablePrefix = null;
+    private $sanitizedTableName = null;
     
     public function __construct($General = null, $Translate = null) {
         $this->General = $General;
@@ -57,7 +64,8 @@ class SurfRecordsModule {
             throw new Exception('Database name is required in db.php');
         }
         
-        $settings_file = __DIR__ . '/../settings.php';
+        $moduleDir = dirname(__DIR__);
+        $settings_file = $moduleDir . '/settings.php';
         
         if (!file_exists($settings_file)) {
             throw new Exception('Settings file not found: ' . $settings_file);
@@ -91,19 +99,45 @@ class SurfRecordsModule {
     }
     
     private function getTablePrefix() {
+        if ($this->tablePrefix !== null) {
+            return $this->tablePrefix;
+        }
+        
         $db_file = STORAGE . 'cache/sessions/db.php';
         
         if (!file_exists($db_file)) {
-            return '';
+            return $this->tablePrefix = '';
         }
         
         $db_config = require $db_file;
         
         if (empty($db_config['surf'][0]['DB'][0]['Prefix'][0]['table'])) {
-            return ''; 
+            return $this->tablePrefix = '';
         }
         
-        return $db_config['surf'][0]['DB'][0]['Prefix'][0]['table'];
+        return $this->tablePrefix = $db_config['surf'][0]['DB'][0]['Prefix'][0]['table'];
+    }
+    
+    private function getSanitizedTableName() {
+        if ($this->sanitizedTableName !== null) {
+            return $this->sanitizedTableName;
+        }
+        
+        $table_prefix = $this->getTablePrefix();
+        return $this->sanitizedTableName = $this->sanitizeTableName($table_prefix . 'PlayerRecords');
+    }
+    
+    private function sanitizeTableName($tableName) {
+        if (empty($tableName) || !is_string($tableName)) {
+            throw new Exception('Invalid table name');
+        }
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) {
+            throw new Exception('Invalid table name format');
+        }
+        if (strlen($tableName) > 64) {
+            throw new Exception('Table name too long');
+        }
+        return $tableName;
     }
     
     private function initDatabase() {
@@ -161,22 +195,8 @@ class SurfRecordsModule {
         ];
     }
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     private function validateMapName($map_name) {
-        if (empty($map_name) || !is_string($map_name)) {
-            return false;
-        }
-        
-        if (strlen($map_name) > 64 || strlen($map_name) < 1) {
+        if (empty($map_name) || !is_string($map_name) || strlen($map_name) > 64 || strlen($map_name) < 1) {
             return false;
         }
         
@@ -184,15 +204,11 @@ class SurfRecordsModule {
             return false;
         }
         
-        $dangerous_patterns = [
-            '/union/i', '/select/i', '/insert/i', '/update/i', '/delete/i',
-            '/drop/i', '/create/i', '/alter/i', '/exec/i', '/script/i',
-            '/<script/i', '/javascript:/i', '/vbscript:/i', '/onload/i',
-            '/onerror/i', '/onclick/i'
-        ];
+        $lower = strtolower($map_name);
+        $dangerous = ['union', 'select', 'insert', 'update', 'delete', 'drop', 'create', 'alter', 'exec', 'script', 'javascript:', 'vbscript:', 'onload', 'onerror', 'onclick'];
         
-        foreach ($dangerous_patterns as $pattern) {
-            if (preg_match($pattern, $map_name)) {
+        foreach ($dangerous as $word) {
+            if (strpos($lower, $word) !== false) {
                 return false;
             }
         }
@@ -233,18 +249,6 @@ class SurfRecordsModule {
         return $data;
     }
     
-    public function clearCache() {
-        $cache_dir = MODULESCACHE . '/module_page_surf_records';
-        if (is_dir($cache_dir)) {
-            $files = glob($cache_dir . '/*');
-            foreach ($files as $file) {
-                if (is_file($file)) {
-                    unlink($file);
-                }
-            }
-        }
-    }
-    
     public function getMaps($category = null) {
         $cache_key = $category ? "maps_{$category}" : 'maps';
         
@@ -256,20 +260,21 @@ class SurfRecordsModule {
                 'other' => []
             ];
             
-            $table_prefix = $this->getTablePrefix();
-            $table_name = $table_prefix . 'PlayerRecords';
+            $table_name = $this->getSanitizedTableName();
             
             if ($category && in_array($category, ['surf', 'kz', 'bhop', 'other'])) {
                 $prefix = $category . '_';
-                $query = "SELECT DISTINCT MapName FROM {$table_name} 
+                $query = "SELECT DISTINCT MapName FROM `{$table_name}` 
                           WHERE Style = 0 
                           AND MapName LIKE ? 
                           ORDER BY MapName ASC 
                           LIMIT 500";
                 $stmt = $this->conn->prepare($query);
-                $stmt->bind_param('s', $prefix);
+                if ($stmt) {
+                    $stmt->bind_param('s', $prefix);
+                }
             } else {
-                $query = "SELECT DISTINCT MapName FROM {$table_name} 
+                $query = "SELECT DISTINCT MapName FROM `{$table_name}` 
                           WHERE Style = 0 
                           ORDER BY MapName ASC 
                           LIMIT 1000";
@@ -316,7 +321,7 @@ class SurfRecordsModule {
     
     public function getMapRecords($map_name) {
         if (!$this->validateMapName($map_name)) {
-            error_log('SurfRecordsModule: Potential SQL injection attempt - ' . $map_name . ' from IP: ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+            error_log('SurfRecordsModule: Potential SQL injection attempt - ' . htmlspecialchars($map_name, ENT_QUOTES, 'UTF-8') . ' from IP: ' . htmlspecialchars($_SERVER['REMOTE_ADDR'] ?? 'unknown', ENT_QUOTES, 'UTF-8'));
             return [];
         }
         
@@ -324,8 +329,7 @@ class SurfRecordsModule {
             $records = [];
             $limit = $this->settings['display']['records_per_page'] ?? 100;
             
-            $table_prefix = $this->getTablePrefix();
-            $table_name = $table_prefix . 'PlayerRecords';
+            $table_name = $this->getSanitizedTableName();
             
             $query = "SELECT 
                         p.SteamID,
@@ -334,7 +338,7 @@ class SurfRecordsModule {
                         p.FormattedTime,
                         p.UnixStamp as Date,
                         ROW_NUMBER() OVER (ORDER BY p.TimerTicks ASC) as place
-                      FROM {$table_name} p 
+                      FROM `{$table_name}` p 
                       WHERE p.MapName = ? AND p.Style = 0
                       ORDER BY p.TimerTicks ASC 
                       LIMIT ?";
@@ -383,14 +387,13 @@ class SurfRecordsModule {
                 'total_maps' => 0
             ];
             
-            $table_prefix = $this->getTablePrefix();
-            $table_name = $table_prefix . 'PlayerRecords';
+            $table_name = $this->getSanitizedTableName();
             
             $query = "SELECT 
                         COUNT(*) as total_records,
                         COUNT(DISTINCT SteamID) as total_players,
                         COUNT(DISTINCT MapName) as total_maps
-                      FROM {$table_name} 
+                      FROM `{$table_name}` 
                       WHERE Style = 0";
             
             $stmt = $this->conn->prepare($query);

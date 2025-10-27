@@ -11,15 +11,14 @@ if (!defined('IN_LR')) {
 }
 
 return [
-    // Настройки отображения
     'display' => [
         'default_map' => 'surf_whiteout',
-        'records_per_page' => 50,  // Уменьшено с 100 до 50
+        'records_per_page' => 50,
         'map_division' => true,
         'default_tab' => 'surf'
     ],
     
-    // Настройки кеширования
+    // Кеширование
     'cache' => [
         'enabled' => true,
         'time' => 1800,  // Увеличено до 30 минут
