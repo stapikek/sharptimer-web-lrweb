@@ -4,11 +4,14 @@ if (!defined('IN_LR')) {
     die('Access denied');
 }
 
+<<<<<<< HEAD
 if (!defined('STORAGE')) {
     $rootPath = dirname(dirname(dirname(dirname(dirname(__DIR__)))));
     define('STORAGE', $rootPath . '/storage/');
 }
 
+=======
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
 class SurfRecordsModule {
     
     private $settings;
@@ -16,8 +19,11 @@ class SurfRecordsModule {
     private $cache_dir;
     private $General;
     private $Translate;
+<<<<<<< HEAD
     private $tablePrefix = null;
     private $sanitizedTableName = null;
+=======
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
     
     public function __construct($General = null, $Translate = null) {
         $this->General = $General;
@@ -64,8 +70,12 @@ class SurfRecordsModule {
             throw new Exception('Database name is required in db.php');
         }
         
+<<<<<<< HEAD
         $moduleDir = dirname(__DIR__);
         $settings_file = $moduleDir . '/settings.php';
+=======
+        $settings_file = __DIR__ . '/../settings.php';
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
         
         if (!file_exists($settings_file)) {
             throw new Exception('Settings file not found: ' . $settings_file);
@@ -99,6 +109,7 @@ class SurfRecordsModule {
     }
     
     private function getTablePrefix() {
+<<<<<<< HEAD
         if ($this->tablePrefix !== null) {
             return $this->tablePrefix;
         }
@@ -107,11 +118,18 @@ class SurfRecordsModule {
         
         if (!file_exists($db_file)) {
             return $this->tablePrefix = '';
+=======
+        $db_file = STORAGE . 'cache/sessions/db.php';
+        
+        if (!file_exists($db_file)) {
+            return '';
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
         }
         
         $db_config = require $db_file;
         
         if (empty($db_config['surf'][0]['DB'][0]['Prefix'][0]['table'])) {
+<<<<<<< HEAD
             return $this->tablePrefix = '';
         }
         
@@ -138,6 +156,12 @@ class SurfRecordsModule {
             throw new Exception('Table name too long');
         }
         return $tableName;
+=======
+            return ''; 
+        }
+        
+        return $db_config['surf'][0]['DB'][0]['Prefix'][0]['table'];
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
     }
     
     private function initDatabase() {
@@ -195,8 +219,27 @@ class SurfRecordsModule {
         ];
     }
     
+<<<<<<< HEAD
     private function validateMapName($map_name) {
         if (empty($map_name) || !is_string($map_name) || strlen($map_name) > 64 || strlen($map_name) < 1) {
+=======
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    private function validateMapName($map_name) {
+        if (empty($map_name) || !is_string($map_name)) {
+            return false;
+        }
+        
+        if (strlen($map_name) > 64 || strlen($map_name) < 1) {
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
             return false;
         }
         
@@ -204,11 +247,23 @@ class SurfRecordsModule {
             return false;
         }
         
+<<<<<<< HEAD
         $lower = strtolower($map_name);
         $dangerous = ['union', 'select', 'insert', 'update', 'delete', 'drop', 'create', 'alter', 'exec', 'script', 'javascript:', 'vbscript:', 'onload', 'onerror', 'onclick'];
         
         foreach ($dangerous as $word) {
             if (strpos($lower, $word) !== false) {
+=======
+        $dangerous_patterns = [
+            '/union/i', '/select/i', '/insert/i', '/update/i', '/delete/i',
+            '/drop/i', '/create/i', '/alter/i', '/exec/i', '/script/i',
+            '/<script/i', '/javascript:/i', '/vbscript:/i', '/onload/i',
+            '/onerror/i', '/onclick/i'
+        ];
+        
+        foreach ($dangerous_patterns as $pattern) {
+            if (preg_match($pattern, $map_name)) {
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
                 return false;
             }
         }
@@ -249,6 +304,21 @@ class SurfRecordsModule {
         return $data;
     }
     
+<<<<<<< HEAD
+=======
+    public function clearCache() {
+        $cache_dir = MODULESCACHE . '/module_page_surf_records';
+        if (is_dir($cache_dir)) {
+            $files = glob($cache_dir . '/*');
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    unlink($file);
+                }
+            }
+        }
+    }
+    
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
     public function getMaps($category = null) {
         $cache_key = $category ? "maps_{$category}" : 'maps';
         
@@ -260,21 +330,36 @@ class SurfRecordsModule {
                 'other' => []
             ];
             
+<<<<<<< HEAD
             $table_name = $this->getSanitizedTableName();
             
             if ($category && in_array($category, ['surf', 'kz', 'bhop', 'other'])) {
                 $prefix = $category . '_';
                 $query = "SELECT DISTINCT MapName FROM `{$table_name}` 
+=======
+            $table_prefix = $this->getTablePrefix();
+            $table_name = $table_prefix . 'PlayerRecords';
+            
+            if ($category && in_array($category, ['surf', 'kz', 'bhop', 'other'])) {
+                $prefix = $category . '_';
+                $query = "SELECT DISTINCT MapName FROM {$table_name} 
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
                           WHERE Style = 0 
                           AND MapName LIKE ? 
                           ORDER BY MapName ASC 
                           LIMIT 500";
                 $stmt = $this->conn->prepare($query);
+<<<<<<< HEAD
                 if ($stmt) {
                     $stmt->bind_param('s', $prefix);
                 }
             } else {
                 $query = "SELECT DISTINCT MapName FROM `{$table_name}` 
+=======
+                $stmt->bind_param('s', $prefix);
+            } else {
+                $query = "SELECT DISTINCT MapName FROM {$table_name} 
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
                           WHERE Style = 0 
                           ORDER BY MapName ASC 
                           LIMIT 1000";
@@ -321,7 +406,11 @@ class SurfRecordsModule {
     
     public function getMapRecords($map_name) {
         if (!$this->validateMapName($map_name)) {
+<<<<<<< HEAD
             error_log('SurfRecordsModule: Potential SQL injection attempt - ' . htmlspecialchars($map_name, ENT_QUOTES, 'UTF-8') . ' from IP: ' . htmlspecialchars($_SERVER['REMOTE_ADDR'] ?? 'unknown', ENT_QUOTES, 'UTF-8'));
+=======
+            error_log('SurfRecordsModule: Potential SQL injection attempt - ' . $map_name . ' from IP: ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
             return [];
         }
         
@@ -329,7 +418,12 @@ class SurfRecordsModule {
             $records = [];
             $limit = $this->settings['display']['records_per_page'] ?? 100;
             
+<<<<<<< HEAD
             $table_name = $this->getSanitizedTableName();
+=======
+            $table_prefix = $this->getTablePrefix();
+            $table_name = $table_prefix . 'PlayerRecords';
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
             
             $query = "SELECT 
                         p.SteamID,
@@ -338,7 +432,11 @@ class SurfRecordsModule {
                         p.FormattedTime,
                         p.UnixStamp as Date,
                         ROW_NUMBER() OVER (ORDER BY p.TimerTicks ASC) as place
+<<<<<<< HEAD
                       FROM `{$table_name}` p 
+=======
+                      FROM {$table_name} p 
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
                       WHERE p.MapName = ? AND p.Style = 0
                       ORDER BY p.TimerTicks ASC 
                       LIMIT ?";
@@ -387,13 +485,22 @@ class SurfRecordsModule {
                 'total_maps' => 0
             ];
             
+<<<<<<< HEAD
             $table_name = $this->getSanitizedTableName();
+=======
+            $table_prefix = $this->getTablePrefix();
+            $table_name = $table_prefix . 'PlayerRecords';
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
             
             $query = "SELECT 
                         COUNT(*) as total_records,
                         COUNT(DISTINCT SteamID) as total_players,
                         COUNT(DISTINCT MapName) as total_maps
+<<<<<<< HEAD
                       FROM `{$table_name}` 
+=======
+                      FROM {$table_name} 
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
                       WHERE Style = 0";
             
             $stmt = $this->conn->prepare($query);

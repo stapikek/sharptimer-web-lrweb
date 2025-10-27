@@ -3,7 +3,11 @@
     "info": "Статистика рекордов режима Surf",
     "author": "stapi",
     "page": "surf",
+<<<<<<< HEAD
     "version": "1.0.2",
+=======
+    "version": "1.0.1",
+>>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
     "required": {
         "core": "0.2",
         "php": "7.4"
