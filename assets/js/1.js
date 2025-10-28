@@ -318,11 +318,7 @@
                         </span>
                     </div>
                     <div class="table-col col-player" data-label="${t('_player_label')}">
-<<<<<<< HEAD
                         <a href="/profiles/${record.SteamID}/?search=1" 
-=======
-                        <a href="/profiles/${record.SteamID}/" 
->>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
                            class="player-name-link"
                            title="${t('_view_profile_title')}">
                             ${escapeHtml(record.PlayerName)}
@@ -349,12 +345,7 @@
                 </div>
             `;
         }
-<<<<<<< HEAD
 
-=======
-        
-        // Инициализируем новые ссылки для копирования
->>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
         initCopyLinks();
     }
     

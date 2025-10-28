@@ -15,22 +15,12 @@ if (!defined('IN_LR')) {
 }
 
 if (!defined('STORAGE')) {
-<<<<<<< HEAD
     $rootPath = dirname(dirname(dirname(dirname(__DIR__))));
     define('STORAGE', $rootPath . '/storage/');
 }
 
 $moduleDir = dirname(__DIR__);
 require_once($moduleDir . '/forward/data.php');
-=======
-    define('STORAGE', '../../../../storage/');
-}
-if (!defined('MODULESCACHE')) {
-    define('MODULESCACHE', STORAGE . 'modules_cache/');
-}
-
-require_once(__DIR__ . '/../forward/data.php');
->>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
 
 $SurfRecords = new SurfRecordsModule();
 
@@ -104,14 +94,6 @@ function validateMapName($map) {
     return true;
 }
 
-<<<<<<< HEAD
-=======
-function validateSteamID64($steamid) {
-    return preg_match('/^7656119[0-9]{10}$/', $steamid);
-}
-
-
->>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
 try {
     switch ($endpoint) {
         

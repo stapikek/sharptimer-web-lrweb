@@ -11,25 +11,14 @@ if (!defined('IN_LR')) {
 }
 
 return [
-<<<<<<< HEAD
     'display' => [
         'default_map' => 'surf_whiteout',
         'records_per_page' => 50,
-=======
-    // Настройки отображения
-    'display' => [
-        'default_map' => 'surf_whiteout',
-        'records_per_page' => 50,  // Уменьшено с 100 до 50
->>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
         'map_division' => true,
         'default_tab' => 'surf'
     ],
     
-<<<<<<< HEAD
     // Кеширование
-=======
-    // Настройки кеширования
->>>>>>> 0c32d38afa72eb973481df02bfd15ac2784578a2
     'cache' => [
         'enabled' => true,
         'time' => 1800,  // Увеличено до 30 минут
