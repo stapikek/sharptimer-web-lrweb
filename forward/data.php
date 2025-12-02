@@ -250,6 +250,10 @@ class SurfRecordsModule {
     }
     
     public function getMaps($category = null) {
+        if ($category !== null && !in_array($category, ['surf', 'kz', 'bhop', 'other'], true)) {
+            $category = null;
+        }
+        
         $cache_key = $category ? "maps_{$category}" : 'maps';
         
         return $this->getCachedData($cache_key, function() use ($category) {
@@ -262,8 +266,8 @@ class SurfRecordsModule {
             
             $table_name = $this->getSanitizedTableName();
             
-            if ($category && in_array($category, ['surf', 'kz', 'bhop', 'other'])) {
-                $prefix = $category . '_';
+            if ($category) {
+                $prefix = $category . '_%';
                 $query = "SELECT DISTINCT MapName FROM `{$table_name}` 
                           WHERE Style = 0 
                           AND MapName LIKE ? 
@@ -298,7 +302,7 @@ class SurfRecordsModule {
                 while ($row = $result->fetch_assoc()) {
                     $map = $row['MapName'];
                     
-                    if (!preg_match('/^[a-zA-Z0-9_-]+$/', $map) || strlen($map) > 64) {
+                    if (!$this->validateMapName($map)) {
                         continue;
                     }
                     
@@ -422,24 +426,19 @@ class SurfRecordsModule {
     }
     
     private function formatTime($ticks) {
-        if (empty($ticks) || $ticks == 0) {
+        if (empty($ticks) || $ticks <= 0) {
             return '0:00.000';
         }
         
         $seconds = $ticks / 66.67;
-        $minutes = floor($seconds / 60);
-        $seconds = $seconds % 60;
+        $minutes = (int)floor($seconds / 60);
+        $seconds = fmod($seconds, 60);
         return sprintf('%d:%06.3f', $minutes, $seconds);
     }
     
-    
     public function __destruct() {
-        if ($this->conn) {
+        if ($this->conn && !$this->conn->connect_error) {
             $this->conn->close();
         }
     }
-}
-
-if (class_exists('SurfRecordsModule') && !isset($SurfRecords)) {
-    $SurfRecords = new SurfRecordsModule();
 }

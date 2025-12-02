@@ -1,15 +1,5 @@
 <?php
 
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
 if (!defined('IN_LR')) {
     define('IN_LR', true);
 }
@@ -36,24 +26,21 @@ if (!$SurfRecords->isConnected()) {
 
 $endpoint = $_GET['endpoint'] ?? 'stats';
 
-function sanitizeInput($input) {
-    if (is_string($input)) {
-        $input = trim($input);
-        $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
-        return $input;
-    }
-    return $input;
+if (!is_string($endpoint)) {
+    sendError('Invalid endpoint type', 400);
 }
 
-$endpoint = sanitizeInput($endpoint);
+$endpoint = trim($endpoint);
 $allowed_endpoints = ['stats', 'maps', 'records', 'map_info'];
-if (!in_array($endpoint, $allowed_endpoints)) {
+
+if (!in_array($endpoint, $allowed_endpoints, true)) {
     sendError('Invalid endpoint', 400);
 }
 
 function sendResponse($data, $statusCode = 200) {
     http_response_code($statusCode);
-    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit();
 }
 
@@ -109,9 +96,12 @@ try {
         case 'maps':
             $category = $_GET['category'] ?? null;
 
-            if ($category) {
-                $category = sanitizeInput($category);
-                if (!in_array($category, ['surf', 'kz', 'bhop', 'other'])) {
+            if ($category !== null) {
+                if (!is_string($category)) {
+                    sendError('Invalid category type');
+                }
+                $category = trim($category);
+                if (!in_array($category, ['surf', 'kz', 'bhop', 'other'], true)) {
                     sendError('Invalid category');
                 }
             }
@@ -127,11 +117,15 @@ try {
         case 'records':
             $map = $_GET['map'] ?? null;
             
-            if (!$map) {
+            if ($map === null || $map === '') {
                 sendError('Map parameter is required');
             }
             
-            $map = sanitizeInput($map);
+            if (!is_string($map)) {
+                sendError('Invalid map parameter type');
+            }
+            
+            $map = trim($map);
             
             if (!validateMapName($map)) {
                 sendError('Invalid map name format');
@@ -152,11 +146,15 @@ try {
         case 'map_info':
             $map = $_GET['map'] ?? null;
             
-            if (!$map) {
+            if ($map === null || $map === '') {
                 sendError('Map parameter is required');
             }
             
-            $map = sanitizeInput($map);
+            if (!is_string($map)) {
+                sendError('Invalid map parameter type');
+            }
+            
+            $map = trim($map);
             
             if (!validateMapName($map)) {
                 sendError('Invalid map name format');

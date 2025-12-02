@@ -308,11 +308,6 @@
     margin-bottom: 15px;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 .loading-indicator p {
     margin: 0;
     font-size: 0.9rem;
@@ -824,125 +819,11 @@
         z-index: -1;
     }
     
-    
     .maps-sidebar-sticky {
         padding: 20px;
-        background: var(--surf-card-bg);
         height: 100vh;
         display: flex;
         flex-direction: column;
-    }
-    
-    
-    .maps-search {
-        position: relative;
-        margin-bottom: 20px;
-    }
-    
-    .maps-search-input {
-        width: 100%;
-        padding: 16px 20px;
-        background: var(--surf-bg);
-        border: 2px solid var(--surf-border);
-        border-radius: 12px;
-        color: var(--surf-text);
-        font-size: 1rem;
-        font-weight: 500;
-        transition: var(--surf-transition);
-    }
-    
-    .maps-search-input:focus {
-        outline: none;
-        border-color: var(--surf-primary);
-        box-shadow: 0 0 0 3px rgba(245, 47, 47, 0.1);
-    }
-    
-    .maps-search-input::placeholder {
-        color: var(--surf-text-muted);
-        font-weight: 400;
-    }
-    
-    .maps-search i {
-        position: absolute;
-        right: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--surf-text-muted);
-        font-size: 1.1rem;
-    }
-    
-    
-    .maps-tabs {
-        margin-bottom: 20px;
-    }
-    
-    .maps-tab {
-        width: 100%;
-        padding: 16px 20px;
-        margin-bottom: 12px;
-        background: var(--surf-primary);
-        border: none;
-        border-radius: 12px;
-        color: var(--surf-text);
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: var(--surf-transition);
-        text-align: left;
-    }
-    
-    .maps-tab:hover {
-        background: var(--surf-hover);
-        transform: translateY(-1px);
-    }
-    
-    .maps-tab.active {
-        background: var(--surf-primary);
-        box-shadow: 0 4px 12px rgba(245, 47, 47, 0.3);
-    }
-    
-    
-    .maps-content {
-        flex: 1;
-        overflow-y: auto;
-        overflow-x: hidden;
-        padding-right: 8px;
-    }
-    
-    
-    
-    .maps-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .map-item {
-        padding: 16px 20px;
-        margin-bottom: 8px;
-        background: var(--surf-bg);
-        border: 2px solid var(--surf-border);
-        border-radius: 12px;
-        color: var(--surf-text);
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: var(--surf-transition);
-        text-align: left;
-    }
-    
-    .map-item:hover {
-        background: var(--surf-hover);
-        border-color: var(--surf-primary);
-        transform: translateY(-1px);
-    }
-    
-    .map-item.active {
-        background: var(--surf-primary);
-        border-color: var(--surf-primary);
-        color: var(--surf-text);
-        font-weight: 600;
-        box-shadow: 0 4px 12px rgba(245, 47, 47, 0.3);
     }
     
     .leaderboard-table-header {
@@ -993,53 +874,15 @@
     }
 }
 
-    .loading-maps {
-        text-align: center;
-        padding: 20px;
-        color: var(--surf-text-secondary);
-        font-style: italic;
-    }
-    
-    .no-maps {
-        text-align: center;
-        padding: 20px;
-        color: var(--surf-text-secondary);
-        font-style: italic;
-    }
-    
-    .error-maps {
-        text-align: center;
-        padding: 20px;
-        color: var(--surf-error);
-        font-style: italic;
-    }
-    
-    .loading-maps::before {
-        margin-right: 8px;
-    }
-    
-    .no-maps::before {
-        margin-right: 8px;
-    }
-    
-    .error-maps::before {
-        margin-right: 8px;
-    }
-
-
-.surf-loading {
-    text-align: center;
-    padding: 60px 20px;
-}
-
-.surf-loading i {
-    font-size: 3rem;
-    color: var(--surf-primary);
-    animation: spin 1s linear infinite;
-}
-
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+}
+
+.loading-maps {
+    text-align: center;
+    padding: 20px;
+    color: var(--surf-text-muted);
+    font-style: italic;
 }
 

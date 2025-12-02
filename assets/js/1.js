@@ -21,8 +21,6 @@
             }
         }
         
-        console.log('Detected language:', lang);
-        
         fetch('/app/modules/module_page_surf_records/translation.json')
             .then(response => response.json())
             .then(data => {
@@ -31,24 +29,14 @@
                     translations[key] = data[key][lang] || data[key]['RU'];
                 });
                 translationsLoaded = true;
-                console.log('Translations loaded for language:', lang, translations);
             })
             .catch(error => {
-                console.error('Failed to load translations:', error);
                 translationsLoaded = true;
             });
     }
     
     function t(key) {
-        if (translationsLoaded && translations[key]) {
-            return translations[key];
-        }
-        if (!translationsLoaded) {
-            console.warn('Translations not loaded yet for key:', key);
-        } else {
-            console.warn('Translation not found for key:', key, 'Language:', typeof window.LR_LANG !== 'undefined' ? window.LR_LANG : 'RU');
-        }
-        return key;
+        return (translationsLoaded && translations[key]) ? translations[key] : key;
     }
     
     loadTranslations();
@@ -228,26 +216,17 @@
                 e.preventDefault();
                 const url = link.getAttribute('href');
                 if (navigator.clipboard) {
-                    navigator.clipboard.writeText(url).then(() => {
-                        showToast('Steam profile link copied!', 'success');
-                    });
+                    navigator.clipboard.writeText(url).catch(() => {});
                 }
             });
         });
     }
     
-    
-    
-    function optimizeTrophyIcons() {
-        const trophies = document.querySelectorAll('.col-place i.fa-trophy');
-        trophies.forEach(trophy => {
-            const color = trophy.style.color;
-            trophy.setAttribute('data-color', color);
-        });
-    }
-    
-    
     function loadMapRecords(mapName) {
+        if (!mapName || typeof mapName !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(mapName)) {
+            return;
+        }
+        
         const leaderboardBody = document.querySelector('.leaderboard-table-body');
         const leaderboardTitle = document.querySelector('.leaderboard-title');
         const leaderboardCount = document.querySelector('.leaderboard-count');
@@ -310,38 +289,51 @@
         leaderboardCount.textContent = `${t('_total_records')} ${data.count}`;
         
         if (data.records && data.records.length > 0) {
-            leaderboardBody.innerHTML = data.records.map(record => `
-                <div class="leaderboard-row ${record.place <= 3 ? 'top-' + record.place : ''}">
-                    <div class="table-col col-place" data-label="${t('_place_label')}">
-                        <span class="place-number place-${record.place}">
-                            #${record.place}
+            const fragment = document.createDocumentFragment();
+            
+            data.records.forEach(record => {
+                if (!record.SteamID || !record.place) return;
+                
+                const row = document.createElement('div');
+                row.className = `leaderboard-row ${record.place <= 3 ? 'top-' + record.place : ''}`;
+                
+                row.innerHTML = `
+                    <div class="table-col col-place" data-label="${escapeHtml(t('_place_label'))}">
+                        <span class="place-number place-${parseInt(record.place)}">
+                            #${parseInt(record.place)}
                         </span>
                     </div>
-                    <div class="table-col col-player" data-label="${t('_player_label')}">
-                        <a href="/profiles/${record.SteamID}/?search=1" 
+                    <div class="table-col col-player" data-label="${escapeHtml(t('_player_label'))}">
+                        <a href="/profiles/${escapeHtml(record.SteamID)}/?search=1" 
                            class="player-name-link"
-                           title="${t('_view_profile_title')}">
+                           title="${escapeHtml(t('_view_profile'))}">
                             ${escapeHtml(record.PlayerName)}
                         </a>
                     </div>
-                    <div class="table-col col-time" data-label="${t('_time_label')}">
+                    <div class="table-col col-time" data-label="${escapeHtml(t('_time'))}">
                         <span class="time-value">${escapeHtml(record.FormattedTime)}</span>
                     </div>
                     <div class="table-col col-actions">
-                        <a href="https://steamcommunity.com/profiles/${record.SteamID}" 
+                        <a href="https://steamcommunity.com/profiles/${escapeHtml(record.SteamID)}" 
                            target="_blank" 
+                           rel="noopener noreferrer"
                            class="action-btn"
-                           title="${t('_steam_title')}">
+                           title="Steam">
                            <svg><use href="/resources/img/sprite.svg#steam"></use></svg>
                         </a>
                     </div>
-                </div>
-            `).join('');
+                `;
+                
+                fragment.appendChild(row);
+            });
+            
+            leaderboardBody.innerHTML = '';
+            leaderboardBody.appendChild(fragment);
         } else {
             leaderboardBody.innerHTML = `
                 <div class="no-records">
                     <i class="fa-solid fa-inbox"></i>
-                    <p>${t('_no_records_message')}</p>
+                    <p>${escapeHtml(t('_no_records'))}</p>
                 </div>
             `;
         }
@@ -350,11 +342,13 @@
     }
     
     function updateActiveMap(mapName) {
+        if (!mapName || typeof mapName !== 'string') return;
+        
         document.querySelectorAll('.map-item, .mobile-map-item').forEach(item => {
             item.classList.remove('active');
         });
         
-        const activeItem = document.querySelector(`[data-map="${mapName}"]`);
+        const activeItem = document.querySelector(`[data-map="${CSS.escape(mapName)}"]`);
         if (activeItem) {
             activeItem.classList.add('active');
         }
@@ -379,36 +373,46 @@
     }
     
     function escapeHtml(text) {
+        if (text === null || text === undefined) {
+            return '';
+        }
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = String(text);
         return div.innerHTML;
     }
     
     function loadMapsForCategory(category) {
-        const mapsList = document.querySelector(`#maps-${category} .maps-list`);
-        if (!mapsList) {
+        if (!category || typeof category !== 'string' || !['surf', 'kz', 'bhop', 'other'].includes(category)) {
             return;
         }
         
-        if (mapsList.dataset.loaded === 'true') {
+        const mapsList = document.querySelector(`#maps-${CSS.escape(category)} .maps-list`);
+        if (!mapsList || mapsList.dataset.loaded === 'true') {
             return;
         }
         
         const originalContent = mapsList.innerHTML;
+        mapsList.innerHTML = `<li class="loading-maps">${escapeHtml(t('_loading_maps'))}</li>`;
         
-        mapsList.innerHTML = `<li class="loading-maps">${t('_loading_maps')}</li>`;
-        
-        fetch(`${window.location.origin}/app/modules/module_page_surf_records/api/index.php?endpoint=maps&category=${category}`)
+        fetch(`${window.location.origin}/app/modules/module_page_surf_records/api/index.php?endpoint=maps&category=${encodeURIComponent(category)}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.data[category] && data.data[category].length > 0) {
-                    mapsList.innerHTML = data.data[category].map(map => `
-                        <li class="map-item" 
-                            data-map="${escapeHtml(map)}"
-                            onclick="selectMap('${escapeHtml(map)}')">
-                            ${escapeHtml(map)}
-                        </li>
-                    `).join('');
+                    const fragment = document.createDocumentFragment();
+                    
+                    data.data[category].forEach(map => {
+                        if (typeof map === 'string' && /^[a-zA-Z0-9_-]+$/.test(map)) {
+                            const li = document.createElement('li');
+                            li.className = 'map-item';
+                            li.setAttribute('data-map', map);
+                            li.textContent = map;
+                            li.onclick = () => selectMap(map);
+                            fragment.appendChild(li);
+                        }
+                    });
+                    
+                    mapsList.innerHTML = '';
+                    mapsList.appendChild(fragment);
                     mapsList.dataset.loaded = 'true';
                 } else {
                     mapsList.innerHTML = originalContent;
@@ -441,9 +445,7 @@
         initKeyboardNavigation();
         highlightActiveMap();
         initCopyLinks();
-        optimizeTrophyIcons();
         initBrowserHistory();
-        
     }
     
     init();

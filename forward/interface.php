@@ -17,9 +17,9 @@ $t = function($key) use ($Translate) {
 };
 
 $current_map = $SurfRecords->getConfig()['display']['default_map'];
-if (isset($_GET['map'])) {
+if (isset($_GET['map']) && is_string($_GET['map'])) {
     $map_param = trim($_GET['map']);
-    if (preg_match('/^[a-zA-Z0-9_-]+$/', $map_param) && strlen($map_param) <= 64) {
+    if (preg_match('/^[a-zA-Z0-9_-]+$/', $map_param) && strlen($map_param) > 0 && strlen($map_param) <= 64) {
         $current_map = $map_param;
     } else {
         error_log('SurfRecordsModule: Invalid map name in URL - ' . htmlspecialchars($map_param, ENT_QUOTES, 'UTF-8'));
